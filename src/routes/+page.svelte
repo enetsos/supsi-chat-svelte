@@ -12,14 +12,25 @@
         ListGroupItem,
     } from "@sveltestrap/sveltestrap";
 
+    import {
+        connectToStomp,
+        subscribeToChannel,
+    } from "../lib/stompIntegration";
+    import {
+        fetchChannels,
+        fetchMessages,
+        createMessage,
+        updateMessage,
+    } from "../lib/api";
+
     const dispatch = createEventDispatcher();
 
     let messages: { text: string; fromMe: boolean; channel: string }[] = []; // Initialize as an empty array
     let newMessage = "";
     let searchTerm = "";
-    let currentChannel = "General"; // Initial channel
+    let currentChannel = "01";
 
-    const sendMessage = (): void => {
+    const sendMessage = async (): Promise<void> => {
         if (newMessage.trim() !== "") {
             messages = [
                 ...messages,
@@ -29,28 +40,35 @@
                     channel: currentChannel,
                 },
             ];
+            await createMessage(currentChannel, newMessage.trim());
             newMessage = "";
             scrollToBottom(); // Scroll to bottom after sending a message
         }
     };
 
-    const receiveMessage = (): void => {
-        messages = [
-            ...messages,
-            {
-                text: "Hello, how can I help you?",
-                fromMe: false,
-                channel: currentChannel,
-            },
-        ];
+    const receiveMessage = async (): Promise<void> => {
+        messages = await fetchMessages(currentChannel);
         scrollToBottom(); // Scroll to bottom when receiving a message
     };
 
-    onMount(receiveMessage);
+    onMount(async () => {
+        await connectToStomp();
+        subscribeToChannel(currentChannel, (message) => {
+            // Handle received message
+            messages.push({
+                text: message.body,
+                fromMe: false,
+                channel: currentChannel,
+            });
+            scrollToBottom(); // Scroll to bottom when receiving a message
+        });
+        await receiveMessage();
+    });
 
-    const switchChannel = (channel: string): void => {
+    const switchChannel = async (channel: string): Promise<void> => {
         currentChannel = channel;
         dispatch("channelChange", currentChannel);
+        await receiveMessage();
     };
 
     // Function to scroll to the bottom
@@ -62,7 +80,7 @@
     };
 </script>
 
-<svelte:head>
+/<svelte:head>
     <link
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
@@ -74,11 +92,8 @@
         <Col xs="4" style="overflow-y: auto;">
             <h2>Sidebar</h2>
             <ListGroup flush>
-                <ListGroupItem on:click={() => switchChannel("General")}>
-                    General
-                </ListGroupItem>
-                <ListGroupItem on:click={() => switchChannel("Random")}>
-                    Random
+                <ListGroupItem on:click={() => switchChannel("01")}>
+                    01
                 </ListGroupItem>
             </ListGroup>
         </Col>
