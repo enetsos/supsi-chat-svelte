@@ -1,7 +1,18 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, createEventDispatcher } from "svelte";
   import { writable } from "svelte/store";
   import { Client } from "@stomp/stompjs";
+  import {
+    ListGroup,
+    ListGroupItem,
+    Input,
+    Button,
+    Icon,
+    Modal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+  } from "@sveltestrap/sveltestrap";
 
   interface Message {
     id: string;
@@ -18,10 +29,11 @@
   let channels = writable<Channel[]>([]);
   let currentChannel = writable<string | null>(null);
   let newMessage = "";
-  let searchQuery = "";
-  let author = "Walter Losa"; // Da configurare
+  let searchTerm = "";
+  let author = "Walter Losa";
+  let searchBarVisible = true; // Variable to control search bar visibility
 
-  const API_KEY = "losa"; // Da configurare
+  const API_KEY = "losa";
   const BASE_URL = "https://supsi-ticket.cloudns.org/supsi-chat/bff/";
   const WS_URL =
     "wss://supsi-ticket.cloudns.org/supsi-chat/supsi-chat-websocket";
@@ -31,26 +43,36 @@
     onConnect: () => {
       client.subscribe(`/app/${API_KEY}/new-message`, (message) => {
         if (message.body) {
-          messages.update((msgs) => [...msgs, JSON.parse(message.body)]);
-        }
-      });
-      client.subscribe(`/app/${API_KEY}/update-message`, (message) => {
-        if (message.body) {
-          messages.update((msgs) =>
-            msgs.map((msg) =>
-              msg.id === JSON.parse(message.body).id
-                ? JSON.parse(message.body)
-                : msg,
-            ),
-          );
+          const newMsg = JSON.parse(message.body);
+          messages.update((msgs) => {
+            const index = msgs.findIndex((msg) => msg.id === newMsg.id);
+            if (index !== -1) {
+              msgs[index] = newMsg;
+              return msgs.slice();
+            } else {
+              return [...msgs, newMsg];
+            }
+          });
         }
       });
     },
   });
 
+  // Event dispatcher for opening/closing the modal
+  const dispatch = createEventDispatcher();
+
+  // Modal state
+  let isModalOpen = writable(false);
+
   onMount(async () => {
     const res = await fetch(`${BASE_URL}channels`);
-    channels.set(await res.json());
+    const data = await res.json();
+    channels.set(data);
+    const firstChannelId = data[0]?.id;
+    currentChannel.set(firstChannelId);
+    if (firstChannelId) {
+      fetchMessages(firstChannelId);
+    }
     client.activate();
   });
 
@@ -62,21 +84,15 @@
   }
 
   async function postMessage() {
-    // Create a FormData object to send the multipart form data
     const formData = new FormData();
-
-    // Add the message details to the FormData object as a JSON string
     formData.append(
       "message",
       new Blob([JSON.stringify({ body: newMessage, author: author })], {
         type: "application/json",
       }),
     );
-
-    // Add the attachment to the FormData object and new blob if not present
     formData.append("attachment", new Blob([], { type: "application/json" }));
 
-    // Make the POST request
     const res = await fetch(
       `${BASE_URL}channels/${$currentChannel}/messages?apiKey=${API_KEY}`,
       {
@@ -85,27 +101,27 @@
       },
     );
 
-    // Check if the request was successful
     if (res.ok) {
-      // Parse the response JSON
-      const newMsg = await res.json();
-
-      // Update the messages store with the new message
-      messages.update((msgs) => [...msgs, newMsg]);
-
-      // Reset the newMessage variable
       newMessage = "";
     } else {
-      // Handle error response
       console.error("Error:", res.status);
     }
   }
+
+  // Function to toggle search bar visibility
+  function toggleSearchBar() {
+    searchBarVisible = !searchBarVisible;
+  }
 </script>
 
-/<svelte:head>
+<svelte:head>
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css"
   />
 </svelte:head>
 
@@ -114,46 +130,55 @@
     <!-- Sidebar -->
     <div class="col-3 p-0 overflow-auto">
       <div class="sidebar p-3">
-        <ul>
+        <ListGroup>
           {#each $channels as channel (channel.id)}
-            <li
+            <ListGroupItem
+              action
+              active={channel.id === $currentChannel}
               on:click={() => {
                 currentChannel.set(channel.id);
                 fetchMessages(channel.id);
               }}
             >
               {channel.name}
-            </li>
+            </ListGroupItem>
           {/each}
-        </ul>
+        </ListGroup>
       </div>
     </div>
     <!-- Chat -->
     <div class="col-9">
       <div class="chat d-flex flex-column h-100">
         <!-- Search Bar -->
-        <div class="search-bar p-3">
-          <input
-            type="text"
-            bind:value={searchQuery}
-            placeholder="Search..."
-            class="form-control"
-          />
-        </div>
+        {#if searchBarVisible}
+          <div class="search-bar p-3">
+            <Input
+              type="text"
+              bind:value={searchTerm}
+              placeholder="Search..."
+              class="form-control"
+            />
+          </div>
+        {/if}
         <!-- Messages -->
         <div
           class="flex-grow-1 overflow-auto p-3"
           style="max-height: calc(100vh - 130px);"
         >
-          <ul>
-            {#each $messages as message (message.id)}
-              <li>
-                <p>{message.body}</p>
-                <small>{message.author}</small>
-              </li>
+          <ListGroup flush>
+            {#each $messages.filter((msg) => msg.body
+                  .toLocaleLowerCase()
+                  .includes(searchTerm.toLowerCase()) || msg.author
+                  .toLocaleLowerCase()
+                  .includes(searchTerm.toLowerCase())) as message}
+              <ListGroupItem>
+                <div class="message-author">{message.author}</div>
+                <div class="message-body">{message.body}</div>
+              </ListGroupItem>
             {/each}
-          </ul>
+          </ListGroup>
         </div>
+
         <!-- Input Message -->
         <form class="p-3">
           <div class="input-group">
@@ -162,15 +187,48 @@
               placeholder="Type a message..."
               class="form-control"
             />
-            <button type="button" class="btn btn-primary" on:click={postMessage}
-              >Send</button
-            >
+            <Button color="primary" on:click={postMessage}>Send</Button>
           </div>
         </form>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Setting button -->
+<div class="setting-button">
+  <Button color="light" on:click={() => isModalOpen.set(true)}>
+    <Icon name="gear" />
+  </Button>
+</div>
+
+<!-- Modal for settings -->
+<Modal bind:isOpen={$isModalOpen}>
+  <ModalHeader toggle={() => isModalOpen.set(false)}>Settings</ModalHeader>
+  <ModalBody>
+    <!-- Your settings content here -->
+    Nome e cognome dell’autore di nuovi messaggi: <Input
+      bind:value={author}
+      class="form-control mb-3"
+    />
+    URL sorgente dei canali/messaggi: <Input
+      value={BASE_URL}
+      class="form-control mb-3"
+    />
+    Search: <Input
+      type="switch"
+      class="form-check-input mb-3"
+      bind:checked={searchBarVisible}
+    />
+    Channels: <Input type="switch" class="form-check-input" />
+  </ModalBody>
+  <ModalFooter>
+    <Button color="secondary" on:click={() => isModalOpen.set(false)}
+      >Close</Button
+    >
+    <!-- Additional buttons for saving settings if needed -->
+  </ModalFooter>
+</Modal>
 
 <style>
   .container-fluid {
@@ -186,5 +244,20 @@
   }
   .search-bar {
     border-bottom: 1px solid #ccc;
+  }
+
+  .message-author {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  .message-body {
+    margin-left: 10px;
+  }
+
+  .setting-button {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
   }
 </style>
