@@ -31,7 +31,8 @@
   let newMessage = "";
   let searchTerm = "";
   let author = "Walter Losa";
-  let searchBarVisible = true; // Variable to control search bar visibility
+  let searchBarVisible = true;
+  let sidebar = true;
 
   const API_KEY = "losa";
   const BASE_URL = "https://supsi-ticket.cloudns.org/supsi-chat/bff/";
@@ -107,11 +108,6 @@
       console.error("Error:", res.status);
     }
   }
-
-  // Function to toggle search bar visibility
-  function toggleSearchBar() {
-    searchBarVisible = !searchBarVisible;
-  }
 </script>
 
 <svelte:head>
@@ -128,24 +124,27 @@
 <div class="container-fluid h-100">
   <div class="row h-100">
     <!-- Sidebar -->
-    <div class="col-3 p-0 overflow-auto">
-      <div class="sidebar p-3">
-        <ListGroup>
-          {#each $channels as channel (channel.id)}
-            <ListGroupItem
-              action
-              active={channel.id === $currentChannel}
-              on:click={() => {
-                currentChannel.set(channel.id);
-                fetchMessages(channel.id);
-              }}
-            >
-              {channel.name}
-            </ListGroupItem>
-          {/each}
-        </ListGroup>
+    {#if sidebar}
+      <div class="col-3 p-0 overflow-auto">
+        <div class="sidebar p-3">
+          <ListGroup>
+            {#each $channels as channel (channel.id)}
+              <ListGroupItem
+                action
+                active={channel.id === $currentChannel}
+                on:click={() => {
+                  currentChannel.set(channel.id);
+                  fetchMessages(channel.id);
+                }}
+              >
+                {channel.name}
+              </ListGroupItem>
+            {/each}
+          </ListGroup>
+        </div>
       </div>
-    </div>
+    {/if}
+
     <!-- Chat -->
     <div class="col-9">
       <div class="chat d-flex flex-column h-100">
@@ -220,7 +219,11 @@
       class="form-check-input mb-3"
       bind:checked={searchBarVisible}
     />
-    Channels: <Input type="switch" class="form-check-input" />
+    Channels: <Input
+      type="switch"
+      class="form-check-input"
+      bind:checked={sidebar}
+    />
   </ModalBody>
   <ModalFooter>
     <Button color="secondary" on:click={() => isModalOpen.set(false)}
