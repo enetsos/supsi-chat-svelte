@@ -170,10 +170,20 @@
                   .includes(searchTerm.toLowerCase()) || msg.author
                   .toLocaleLowerCase()
                   .includes(searchTerm.toLowerCase())) as message}
-              <ListGroupItem>
-                <div class="message-author">{message.author}</div>
-                <div class="message-body">{message.body}</div>
-              </ListGroupItem>
+              {#if message.author === author}
+                <ListGroupItem
+                  class="d-inline-flex align-items-end flex-column"
+                >
+                  <div class="message-author">You</div>
+                  <div class="message-body">{message.body}</div>
+                </ListGroupItem>
+              {/if}
+              {#if message.author !== author}
+                <ListGroupItem class="d-flex flex-column">
+                  <div class="message-author">{message.author}</div>
+                  <div class="message-body">{message.body}</div>
+                </ListGroupItem>
+              {/if}
             {/each}
           </ListGroup>
         </div>
