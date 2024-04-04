@@ -108,6 +108,13 @@
       console.error("Error:", res.status);
     }
   }
+
+  function scrollDown() {
+    const chatContainer = document.querySelector(".chat");
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  }
 </script>
 
 <svelte:head>
@@ -147,7 +154,7 @@
 
     <!-- Chat -->
     <div class="col-9">
-      <div class="chat d-flex flex-column h-100">
+      <div class=" d-flex flex-column h-100">
         <!-- Search Bar -->
         {#if searchBarVisible}
           <div class="search-bar p-3">
@@ -161,7 +168,7 @@
         {/if}
         <!-- Messages -->
         <div
-          class="flex-grow-1 overflow-auto p-3"
+          class="chat flex-grow-1 overflow-auto p-3"
           style="max-height: calc(100vh - 130px);"
         >
           <ListGroup flush>
@@ -199,6 +206,11 @@
             <Button color="primary" on:click={postMessage}>Send</Button>
           </div>
         </form>
+        <div class="scroll-down-button">
+          <Button color="primary" on:click={scrollDown}>
+            <Icon name="arrow-down-circle" />
+          </Button>
+        </div>
       </div>
     </div>
   </div>
@@ -272,5 +284,10 @@
     position: fixed;
     bottom: 10px;
     left: 10px;
+  }
+  .scroll-down-button {
+    position: absolute;
+    bottom: 70px;
+    right: 60px;
   }
 </style>
