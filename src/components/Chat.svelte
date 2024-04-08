@@ -20,8 +20,8 @@
     import MessageItem from "./MessageItem.svelte";
     import Siderbar from "./Siderbar.svelte";
 
-    export let searchBarVisible: boolean = true;
-    export let showChannels: boolean = true;
+    export let searchBarVisible: boolean;
+    export let showSider: boolean = true;
     export let author: string;
     export let key: string;
     export let url: string;
@@ -156,7 +156,7 @@
 <div class="container-fluid h-100">
     <div class="row h-100">
         <!-- Sidebar -->
-        {#if showChannels}
+        {#if showSider}
             <Siderbar
                 {channels}
                 {selectedChannel}

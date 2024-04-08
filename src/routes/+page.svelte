@@ -1,9 +1,9 @@
 <script lang="ts">
   import Chat from "../components/Chat.svelte";
-  import Sidebar from "../components/Siderbar.svelte";
   import Setting from "../components/Setting.svelte";
 
   let searchBarVisible = true;
+  let showSider = true;
   let url = "https://supsi-ticket.cloudns.org/supsi-chat/bff";
   let websocketUrl =
     "wss://supsi-ticket.cloudns.org/supsi-chat/supsi-chat-websocket";
@@ -26,7 +26,14 @@
 
 <div class="container-fluid">
   <!-- Chat -->
-  <Chat {searchBarVisible} {author} {key} {url} {websocketUrl} />
+  <Chat
+    bind:searchBarVisible
+    bind:showSider
+    bind:author
+    {key}
+    {url}
+    {websocketUrl}
+  />
 
-  <Setting {author} {searchBarVisible} {BASE_URL} />
+  <Setting bind:author bind:searchBarVisible bind:showSider {BASE_URL} />
 </div>

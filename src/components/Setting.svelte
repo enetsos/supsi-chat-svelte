@@ -12,7 +12,7 @@
 
     export let author: string;
     export let searchBarVisible = true;
-    export let sidebar = true;
+    export let showSider = true;
     export let BASE_URL: string;
 
     export const isModalOpen = writable(false);
@@ -43,14 +43,13 @@
         Channels: <Input
             type="switch"
             class="form-check-input"
-            bind:checked={sidebar}
+            bind:checked={showSider}
         />
     </ModalBody>
     <ModalFooter>
         <Button color="secondary" on:click={() => isModalOpen.set(false)}
             >Close</Button
         >
-        <!-- Additional buttons for saving settings if needed -->
     </ModalFooter>
 </Modal>
 
