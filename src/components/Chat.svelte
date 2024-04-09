@@ -11,7 +11,7 @@
         ModalFooter,
     } from "@sveltestrap/sveltestrap";
 
-    import { onMount } from "svelte";
+    import { afterUpdate } from "svelte";
     import ChatService from "../services/ChatService";
     import WebSocketService from "../services/WebSocketService";
     import { SvelteToast, toast } from "@zerodevx/svelte-toast";
@@ -33,6 +33,7 @@
     let channels: Channel[] = [];
     let messages: Message[] = [];
     let replyTo: Message | undefined;
+    let reply: boolean = false;
     let editMessage: Message | undefined;
     let message = "";
     let file: File | undefined;
@@ -56,10 +57,14 @@
 
     const handleChannelSelected = (event: CustomEvent<Channel>) => {
         selectedChannel = event.detail;
+        selectedChannel.badge = undefined;
 
         const index = channels.findIndex(
             (channel) => channel.id === selectedChannel?.id,
         );
+
+        channels[index].badge = undefined;
+        fetchMessages();
     };
 
     const createMessage = async (event: MouseEvent) => {
@@ -80,24 +85,27 @@
                 replyTo = undefined;
             }
         }
+        fetchMessages();
     };
 
     const onMessage = (msg: Message) => {
-        if (msg.author !== author && msg.channelId !== selectedChannel?.id) {
+        if (msg.author !== author && msg.channel !== selectedChannel?.id) {
             const index = channels.findIndex(
-                (channel) => channel.id === msg.channelId,
+                (channel) => channel.id === msg.channel,
             );
 
             if (index != -1) {
                 const channel = channels[index];
+                channels[index].badge = (channel.badge || 0) + 1;
 
                 toast.push(
                     `New message from ${msg.author} in ${channel.name}!`,
                 );
             }
         }
+        fetchMessages();
 
-        if (msg.channelId !== selectedChannel?.id) return;
+        if (msg.channel !== selectedChannel?.id) return;
 
         messages = [...messages, msg];
     };
@@ -105,22 +113,22 @@
     const onMessageUpdate = (updatedMsg: Message) => {
         if (
             updatedMsg.author !== author &&
-            updatedMsg.channelId !== selectedChannel?.id
+            updatedMsg.channel !== selectedChannel?.id
         )
             toast.push(`Updated from ${updatedMsg.author}!`);
 
-        if (updatedMsg.channelId !== selectedChannel?.id) return;
+        if (updatedMsg.channel !== selectedChannel?.id) return;
 
         messages = messages.map((msg) =>
             msg.id === updatedMsg.id ? updatedMsg : msg,
         );
     };
 
-    $: (async () => {
+    async function fetchMessages() {
         messages = selectedChannel
             ? await ChatService.getChannelMessages(selectedChannel.id)
             : [];
-    })();
+    }
 
     $: {
         reset();
@@ -129,6 +137,7 @@
         ChatService.getChannels().then((ch) => {
             channels = ch;
             selectedChannel = ch[0];
+            fetchMessages(); // Fetch messages when channels are loaded
         });
 
         WebSocketService.deactivate();
@@ -140,6 +149,7 @@
 
         WebSocketService.activate();
     }
+
     function getParentMessage(message: Message) {
         if (!message.parentMessageId) return;
         return messages.find((msg) => msg.id === message.parentMessageId);
@@ -151,6 +161,10 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
     }
+
+    afterUpdate(() => {
+        scrollDown();
+    });
 </script>
 
 <div class="container-fluid h-100">
@@ -188,8 +202,8 @@
                                     .toLocaleLowerCase()
                                     .includes(searchTerm.toLowerCase())) as message}
                             <MessageItem
-                                {message}
-                                {author}
+                                bind:message
+                                bind:author
                                 on:edit={handleOnEdit}
                                 on:reply={handleOnReply}
                                 on:messageClick

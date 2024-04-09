@@ -24,54 +24,43 @@
         if ((event.target as HTMLElement).nodeName !== "BUTTON")
             dispatch("messageClick", message);
     };
-
-    const handleCancel = () => {
-        dispatch("cancel");
-    };
 </script>
 
 <div
     role="presentation"
-    class="flex {message.author === author
-        ? 'justify-end'
-        : 'justify-start'} items-start"
+    class="d-flex justify-content-{message.author === author
+        ? 'end'
+        : 'start'} mb-3"
     on:click={handleClick}
 >
-    <div class="ml-4 bg-gray-800 p-4 rounded-lg">
+    <div class="ml-4 bg-primary p-3 rounded-lg w-75">
         <div class="d-flex justify-content-between">
-            <p class="text-sm font-medium text-gray-400">{message.author}</p>
+            <p class="text-sm font-medium text-light">{message.author}</p>
             {#if message.lastEditTime !== message.date}
-                <p
-                    class="text-xs text-gray-300"
-                    title="Edited at {new Date(
-                        message.lastEditTime,
-                    ).toLocaleString()}"
-                >
-                    Edited
-                </p>
+                <p class="text-xs text-light">Edited</p>
             {/if}
         </div>
         {#if parentMessage}
-            <div class="ml-4 bg-gray-700 p-2 rounded-lg">
-                <p class="text-xs text-gray-300">Replying to:</p>
-                <p class="text-sm text-gray-400">{parentMessage.body}</p>
+            <div class="ml-4 bg-secondary p-2 rounded-lg">
+                <p class="text-xs text-light">Replying to:</p>
+                <p class="text-sm text-dark">{parentMessage.body}</p>
             </div>
         {/if}
-        <p class="text-gray-200">{message.body}</p>
-        <div class="d-flex justify-content-between align-items-center mt-1">
-            <p class="text-xs text-gray-300">
+        <p class="text-light">{message.body}</p>
+        <div class="d-flex justify-content-between align-items-center">
+            <p class="text-xs text-light">
                 {new Date(message.date).toLocaleString()}
             </p>
             <div class="d-flex align-items-center">
                 <button
-                    class="btn btn-link text-xs text-gray-300"
+                    class="btn btn-link btn-sm text-light"
                     on:click={replyToMessage}
                 >
                     Reply
                 </button>
                 {#if message.author === author}
                     <button
-                        class="btn btn-link text-xs text-gray-300"
+                        class="btn btn-link btn-sm text-light"
                         on:click={editMessage}
                     >
                         Edit
@@ -85,7 +74,7 @@
 {#if ogTags.title || ogTags.image}
     <div class="mt-3">
         {#if ogTags.title}
-            <p class="text-xs text-gray-300">{ogTags.title}</p>
+            <p class="text-xs text-light">{ogTags.title}</p>
         {/if}
         {#if ogTags.image}
             <img
@@ -98,30 +87,20 @@
     </div>
 {/if}
 
-<div class="bg-gray-800 p-2 rounded-lg mt-2">
-    <p class="text-xs font-medium text-gray-400">{message.author}</p>
-    <p class="text-gray-200">{message.body}</p>
-    <button class="btn btn-link text-xs text-gray-300" on:click={handleCancel}>
-        Cancel
-    </button>
-</div>
-
 {#if attachment}
     <div class="d-flex align-items-center mt-2">
-        <i class="text-gray-300 text-4xl mr-3"></i>
+        <i class="text-light text-4xl mr-3"></i>
         <div>
-            <p class="text-sm text-gray-400">{attachment.title}</p>
+            <p class="text-sm text-dark">{attachment.title}</p>
             <a
                 href={attachment.url}
                 target="_blank"
                 referrerpolicy="no-referrer"
                 download="true"
             >
-                <button class="btn btn-link text-xs text-gray-200"
-                    >Download</button
-                >
+                <button class="btn btn-link btn-sm text-light">Download</button>
             </a>
-            <p class="text-xs text-gray-300">
+            <p class="text-xs text-light">
                 {attachment.size} - {attachment.contentType}
             </p>
         </div>

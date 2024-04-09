@@ -31,6 +31,11 @@
                         )}
                 >
                     {channel.name}
+                    {#if channel.badge && channel !== selectedChannel}
+                        <span class="badge bg-danger rounded-pill"
+                            >{channel.badge}</span
+                        >
+                    {/if}
                 </ListGroupItem>
             {/each}
         </ListGroup>

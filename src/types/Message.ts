@@ -8,7 +8,7 @@ export type Message = {
     author: string;
     date: string;
     lastEditTime: string;
-    channelId: number;
+    channel: number;
     attachment: Attachment | null;
 };
 

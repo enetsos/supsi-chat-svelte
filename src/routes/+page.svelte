@@ -7,7 +7,7 @@
   let url = "https://supsi-ticket.cloudns.org/supsi-chat/bff";
   let websocketUrl =
     "wss://supsi-ticket.cloudns.org/supsi-chat/supsi-chat-websocket";
-  let author = "Walter";
+  let author = "Walter Losa";
   let key = "losa";
 
   let BASE_URL = "https://supsi-ticket.cloudns.org/supsi-chat/bff";
