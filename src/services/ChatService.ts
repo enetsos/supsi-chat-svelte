@@ -56,6 +56,7 @@ class ChatService {
             "message",
             new Blob([JSON.stringify(message)], { type: "application/json" })
         );
+        if (attachment) alert("attachment" + attachment.name);
 
         if (attachment) formData.append("attachment", attachment, attachment.name);
         else formData.append("attachment", new Blob(), "empty");

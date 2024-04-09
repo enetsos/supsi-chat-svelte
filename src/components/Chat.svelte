@@ -1,20 +1,9 @@
 <script lang="ts">
-    import {
-        ListGroup,
-        ListGroupItem,
-        Input,
-        Button,
-        Icon,
-        Modal,
-        ModalHeader,
-        ModalBody,
-        ModalFooter,
-    } from "@sveltestrap/sveltestrap";
+    import { ListGroup, Input, Button, Icon } from "@sveltestrap/sveltestrap";
 
     import { afterUpdate } from "svelte";
     import ChatService from "../services/ChatService";
     import WebSocketService from "../services/WebSocketService";
-    import { SvelteToast, toast } from "@zerodevx/svelte-toast";
     import type { Message } from "../types/Message";
     import type { Channel } from "../types/Channel";
     import MessageItem from "./MessageItem.svelte";
@@ -69,6 +58,7 @@
 
     const createMessage = async (event: MouseEvent) => {
         if (selectedChannel) {
+            if (file) alert(file.name);
             if (editMessage && editMessage.id) {
                 await ChatService.updateMessage(editMessage.id, message);
                 editMessage = undefined;
@@ -97,10 +87,6 @@
             if (index != -1) {
                 const channel = channels[index];
                 channels[index].badge = (channel.badge || 0) + 1;
-
-                toast.push(
-                    `New message from ${msg.author} in ${channel.name}!`,
-                );
             }
         }
         fetchMessages();
@@ -115,9 +101,7 @@
             updatedMsg.author !== author &&
             updatedMsg.channel !== selectedChannel?.id
         )
-            toast.push(`Updated from ${updatedMsg.author}!`);
-
-        if (updatedMsg.channel !== selectedChannel?.id) return;
+            if (updatedMsg.channel !== selectedChannel?.id) return;
 
         messages = messages.map((msg) =>
             msg.id === updatedMsg.id ? updatedMsg : msg,
@@ -222,7 +206,7 @@
                             placeholder="Type a message..."
                             class="form-control"
                         />
-                        <input type="file" bind:value={file} />
+                        <input type="file" />
                         <Button color="primary" on:click={createMessage}
                             >Send</Button
                         >

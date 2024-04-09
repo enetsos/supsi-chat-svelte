@@ -10,8 +10,6 @@
     export let author: string;
     let attachment: Attachment;
 
-    let ogTags: Record<string, string> = {};
-
     const editMessage = () => {
         dispatch("edit", message);
     };
@@ -70,22 +68,6 @@
         </div>
     </div>
 </div>
-
-{#if ogTags.title || ogTags.image}
-    <div class="mt-3">
-        {#if ogTags.title}
-            <p class="text-xs text-light">{ogTags.title}</p>
-        {/if}
-        {#if ogTags.image}
-            <img
-                fetchPriority="high"
-                alt="Preview of message url"
-                src={ogTags.image}
-                class="mt-2 img-fluid max-w-xs"
-            />
-        {/if}
-    </div>
-{/if}
 
 {#if attachment}
     <div class="d-flex align-items-center mt-2">
